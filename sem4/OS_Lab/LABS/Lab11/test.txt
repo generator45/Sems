@@ -1,0 +1,4 @@
+Original FD
+Duplicated FD (dup)
+Duplicated FD (dup2)
+Duplicated FD (fcntl)

@@ -1,0 +1,70 @@
+		PDS V.01
+- binary format(not text)
+- Fixed length(not varLen)
+- KeyOps(primitive) Open,Store,Read,Close
+
+Storage ==> key [record] (format)
+
+open ==> fopen "ab+" mode
++ >> read, write both
+store ==> fwrite(ptr_to_data, SizeOfeachItem, NOofItems, fileptr)
+				--> this points to where data 
+strings should be stored using the array format (so that memory gets allocated properly)
+
+loc ptr(dynamic ie keeps on moving as long as we do operations) ==>
+
+read ==> fread(ptr_to_data, SizeOfeachItem, NOofItems, fileptr)
+		 fseek(fileptr, offset, WHENCE)
+		 							-->(from where)
+		 							-->(seek_set) --> start 
+		 							-->(seek_end) --> end
+		 							-->(seek_curr) --> current
+
+		 				offset ==> number of bytes to move the file ptr
+close ==> fclose
+
+# include guards 
+(ifndef and endif)
+
+# unix philosiphy (use 0 for success and 1 2 3... for other commands)
+
+
+# [library]<---[application]
+--> No main files
+--> API APPROACH
+
+# .c files should have the definations of the funcs/ vars used in headers
+
+# .dat to indicate data file
+
+
+# use the fread key to first find the matching key and then fread struct to read the 
+  data present
+
+# copy from 27 to pds.cs
+
+
+
+
+28/1/25
+-----------------------------------------------------------------------------------------------
+
+
+# void* pointer helps the strcut to work with all types of data(for c)
+
+										GENERIC PROGRAMMING
+
+function pointer
+
+	myprint(struct contact* cptr){
+		printf("")
+	}
+
+
+-----------------------------------------------------------------------------------
+DELETE
+
+
+
+
+

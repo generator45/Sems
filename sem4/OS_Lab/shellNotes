@@ -1,0 +1,68 @@
+(()) can be ued for doing C like operations in bash
+
+eg.==>  
+	if(($age<30)) similar to if[$age -lt 30]
+
+
+2)OWNERS && GROUPS
+-- fileType permisssions
+--     		
+
+3) seq command for loop 
+
+--------------------------------------------------------------
+1. Block Special Files (Block Devices)
+These represent hardware devices that transfer data in fixed-size blocks (e.g., 512 bytes, 4KB).
+Used for storage devices like hard drives, SSDs, USB drives, and CD-ROMs.
+The kernel buffers and optimizes access to these devices for efficiency.
+Example: /dev/sda (a hard drive), /dev/mmcblk0 (an SD card).
+Characteristics of Block Devices
+Supports random access (you can read/write at any location).
+Data transfer occurs in blocks.
+Examples of block device commands:
+sh
+Copy
+Edit
+ls -l /dev | grep "^b"   # List all block devices
+sudo fdisk -l            # View partition details of block devices
+2. Character Special Files (Character Devices)
+These represent devices that transmit data one character at a time.
+Used for serial communication devices, keyboards, mice, and terminals.
+No buffering or block optimization is performed by the kernel.
+Example: /dev/ttyS0 (a serial port), /dev/random (random number generator).
+Characteristics of Character Devices
+Sequential access only (cannot seek to a specific location like block devices).
+Data is transferred byte-by-byte.
+Examples of character device commands:
+sh
+Copy
+Edit
+ls -l /dev | grep "^c"   # List all character devices
+cat /dev/random          # Print random bytes (interrupt with Ctrl+C)
+
+--------------------------------------------------------------
+The main difference between block and character devices is how they handle data transfer:
+
+Block Devices → Transfer data in blocks (fixed-size chunks), allowing random access (you can jump to any part of the data).
+
+Example: Hard drives (/dev/sda), SSDs, USB drives.
+Use case: Storing files, partitions, databases.
+Character Devices → Transfer data one character (byte) at a time, using sequential access (you have to read/write in order, no jumping around).
+
+Example: Keyboards (/dev/input/), serial ports (/dev/ttyS0), printers.
+Use case: Direct interaction with hardware (input/output).
+Think of it like this:
+
+Block devices are like a book 📖—you can open any page directly.
+Character devices are like an audiobook 🎧—you must listen in order, no skipping ahead instantly.
+
+----------------------------------------------------------------------
+Key Differences Between Hard Links and Soft Links
+
+Feature	Hard Link	Soft Link
+Type	Duplicate reference to the same file	Shortcut (pointer) to a file
+Inode	Same as original	Different from original
+Works if original is deleted?	✅ Yes	❌ No (broken link)
+Can link directories?	❌ No	✅ Yes
+Can cross filesystems?	❌ No	✅ Yes
+Storage	Same as original file	Stores only the file path

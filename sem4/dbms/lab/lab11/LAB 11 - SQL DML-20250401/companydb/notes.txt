@@ -1,0 +1,82 @@
+delete can be rolled back, truncate can't be rolled back
+
+by default values are case-insensitive;
+by default auto-commit;
+
+
+select salary as 'monthly salary' from employee order by 'monthly salary' desc;
+(can't use alias name with quotes in them in order by clause)
+select salary as 'monthly salary' from employee order by 1 desc;
+==> gives some random order, this is because the alias name is not recognized in the order by clause
+
+select salary as 'monthly_salary' from employee order by 'monthly_salary' desc;
+==> The alias 'monthly_salary' is enclosed in single quotes ('), which SQL interprets as a string literal, not as the alias name.
+In the ORDER BY clause, SQL is trying to sort by the literal string 'monthly_salary', which doesn't make sense.
+
+
+
+so use  simple _ instead of space
+
+
+count excludes null values
+
+select avg(salary) from employee;
+==> this excludes null values
+
+select avg(salary) from employee where salary is not null;
+
+select dno,fname,  count(fname),sum(salary) from employee where sex='F' group by dno;
+==> this doesn't work because the select list contains columns that are not in the group by clause
+
+Yes, both WHERE and HAVING can be used in the same query, but they serve different purposes:
+
+Differences Between WHERE and HAVING:
+WHERE:
+
+Filters rows before grouping.
+Works on individual rows of the table.
+Cannot use aggregate functions (e.g., SUM, AVG) directly.
+HAVING:
+
+Filters groups after grouping.
+Works on aggregated data (results of GROUP BY).
+Can use aggregate functions.
+
+Aliases are only available in the SELECT clause and later stages like ORDER BY or HAVING.
+Always use the actual column name in the WHERE clause.
+
+
+SELECT dnumber, dname from department where dnumber in (select dnumber from employee where dname= 'Headquarters' or dname= 'Administration');
+
+select fname, salary from employee where salary = (select max(salary) from employee);
+
+
+select fname, salary from employee where salary = (select max(salary) from employee);
+-- this will return all employees with the max salary
+select fname, salary from employee where salary = max(salary);
+-- this doesn't work because max(salary) is a aggregate function and salary is a 
+
+where is evaluated for every row
+
+
+Common table expressions (CTEs) are temporary result sets that can be referenced within a SELECT, INSERT, UPDATE, or DELETE statement. They are defined using the WITH clause and can be thought of as a named subquery. CTEs can improve readability and organization of complex queries by breaking them into smaller, more manageable parts.
+-- Named query
+-- Table variable
+
+
+-- use with 
+
+with dep_counts as (
+    select dno, count(*) as emp_count
+    from employee
+    group by dno
+)
+
+this dep_counts is a temporary table
+-- use this temporary table in the main query
+
+JOINS
+left outer join ==> pads the right table with nulls when there is no match
+
+
+

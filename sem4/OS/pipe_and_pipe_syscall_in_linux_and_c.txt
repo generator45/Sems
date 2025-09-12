@@ -1,0 +1,76 @@
+
+What is a Pipe and pipe() syscall in Linux and C
+
+📜 What is a Pipe in Linux?
+A pipe is a unidirectional communication channel that can be used between processes (usually related processes like parent-child). Data written to one end of the pipe can be read from the other end.
+
+Key Characteristics:
+- Pipes work in one direction only (one side writes, the other side reads).
+- They are used for Inter-Process Communication (IPC).
+- Pipes have a buffer in the kernel — data written to the pipe sits there until read.
+- They are anonymous by default, meaning they exist only while the processes are running.
+
+⚙️ What is the pipe() syscall?
+The pipe() system call is how you create a pipe in C (and in many other languages that interact with the Linux API).
+
+Function Signature
+#include <unistd.h>
+int pipe(int pipefd[2]);
+
+What pipe() does
+- Creates a new pipe.
+- Returns two file descriptors:
+    - pipefd[0]: the read end.
+    - pipefd[1]: the write end.
+
+Example Usage
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+int main() {
+    int pipefd[2];
+    char buffer[100];
+
+    if (pipe(pipefd) == -1) {
+        perror("pipe");
+        exit(EXIT_FAILURE);
+    }
+
+    // Write to the pipe
+    write(pipefd[1], "Hello, Pipe!", 13);
+
+    // Read from the pipe
+    read(pipefd[0], buffer, sizeof(buffer));
+    
+    printf("Received from pipe: %s\n", buffer);
+
+    // Close the pipe ends (good practice)
+    close(pipefd[0]);
+    close(pipefd[1]);
+
+    return 0;
+}
+
+Typical Use Case: Parent-Child Communication
+Pipes are often used between parent and child processes after fork(). Example:
+
+if (fork() == 0) { // child
+    close(pipefd[0]);  // close unused read end
+    write(pipefd[1], "Message from child", 18);
+    close(pipefd[1]);
+} else {  // parent
+    close(pipefd[1]);  // close unused write end
+    read(pipefd[0], buffer, sizeof(buffer));
+    printf("Parent received: %s\n", buffer);
+    close(pipefd[0]);
+}
+
+Summary
+
+| Syscall   | Purpose                                      |
+|-----------|----------------------------------|
+| pipe()    | Create a unidirectional pipe |
+| read()    | Read from pipe                |
+| write()   | Write to pipe                 |
+| close()   | Close pipe ends when done |

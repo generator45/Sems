@@ -1,0 +1,510 @@
+lec-0 
+
+od –cx <filename> to see the dump of the file.
+ objdump –d <executable file or object file> to see assembly of a file
+ gdb <executable file with path> to step by step follow the file execution
+ strace <executable file with path> to see the list of system calls made when the program executes
+ ltrace <executable file with path> to see the list of library calls made when the program executes
+ man <command or call> to see manual page information, eg man ls, man 2 printf, man 3 printf, man ps
+Other useful tools include ps,
+
+---------------------------------------------------------------------------------
+lec-01
+
+-- Child process gets the return value 0 from fork cammand and the parent gets the process ID of the new formed child as the return value.
+-- Summary: the variables for x and i of the child are completely independent from (not shared with) the parent: 	
+		that is one of the things that is implied by “processes are isolated!”
+
+-- execv(prog, params) ==> this replaces the current process with itself i.e it exectues with the process id of the current program
+
+What Happens After execv?
+If execv succeeds:
+	The original program is completely replaced.
+	The new program starts executing from main() as if it was started normally.
+	The original program’s code, data, and stack are all lost.
+	Control never returns to the original process.
+If execv fails:
+	It returns -1, and the original process continues execution from the next line after execv.
+	errno is set to indicate the error.
+
+The first arg for execv is the name of the program i want to execute
+
+WAIT
+
+Key Takeaways
+	wait(&wstatus) blocks the parent until a child process terminates.
+	wstatus stores child process exit information:
+	WIFEXITED(wstatus) checks if the child exited normally.
+	WEXITSTATUS(wstatus) retrieves the exit code.
+	WIFSIGNALED(wstatus) checks if the child was killed by a signal.
+	WTERMSIG(wstatus) gets the signal that terminated the child.
+If the parent never calls wait(), the child becomes a zombie process (until the parent exits).
+--------------------------------------------------------------------------------
+different man pages can be accessed
+-- syscalls
+-- funccalls
+--
+
+crtl+z
+
+fg, bg
+
++ means foreground
+R --> running
+S --> sleeping
+s (Session Leader)
+l --> multithreaded
+Z --> zombie state (when the process exited on the termial, its proccess id and meta data is saved by Linux)
+
+==>	Description:
+		A session leader is a process that initializes a session, usually by starting 
+		other processes.
+		This is often the shell or the parent process of a group of related processes. 
+		[it has control over ctrl+C]
+
+Only super user can make a process faster by giving -ve nice values.....
+Rest all can only set the nice value to make a command slower...
+
+
+22/1/25
+
+library calls contain the syscalls
+
+Static flag gives us all the library code linked in a single one
+whereas dynamic linking gives us the refrence to the linked code and tries to make
+a short file... 
+
+libc.so has the reference to the actually lib executing the code and so its short and saves memory...
+
+@Compile Time (Code Compilation)
+
+When you write code that uses printf, the compiler (e.g., gcc) generates an object file that contains a reference to the printf symbol but does not include the actual implementation of the printf function.
+
+Example:
+c
+Copy
+Edit
+printf("Hello, World!\n");
+
+The compiler knows printf is part of the standard library, so it generates a call to printf but does not include the code for it. Instead, it relies on the linker to resolve the symbol.
+
+
+@Linking (Dynamic Linking)
+
+During the linking phase, the linker (e.g., ld) does not copy the implementation of printf into your program.
+Instead, it adds metadata to your program's executable indicating that the symbol printf will be resolved at runtime from the shared library (e.g., libc.so.6 on Linux)
+
+
+if two processes are started in the same command line then they are assigned the same  "PGID"
+kill can be used to kill groups
+
+Check if a program is statically or dynamically linked:
+Each foreground command gets a new PGID (like your ps command).
+Each background job (started separately) gets a unique PGID.
+Processes started together in a single job share a PGID.
+GNOME session and other system processes follow their own session management.
+ldd my_program
+-------------------------------------------------------------------------------------
+
+Process Scheduling 
+
+-- if arriving time is same then SJF ==> small jobs first strategy 
+-- job suspension(preemption) [while working on job...another job can suspend it acc to
+   scheduling algo.]
+-- STCF(reach the same arrival state and then apply SJF)
+-- Response time ==> the timem between me hitting enter and the system responding
+   					 (first  response)
+-- Interactive jobs require better response times 
+-- Round Robin causes heavy context changing(the smaller the slice the more the context 
+   switches you make) [not necessary but exhaustive work (horrible)]
+-- Overlap b/w disk(IO) and CPU to save execution time 
+-- nicr value i sjust simple scheduling with nothing to do with SJF and all 
+-- user decides the priority 
+
+
+5/02/2025
+-------------------------------------------------------------------------------------
+-- FIFO and RR are high priority tasks[95% CPU] and all other tasks are regular 
+	tasks (known as SCHED_OTHER)[5%].
+
+-- NAME
+       chrt - manipulate the real-time attributes of a process
+
+-- SYNOPSIS
+       chrt [options] priority command argument ...
+
+-- chrt can be used to change the policy of processes to give them more cpu 
+	priority 
+
+-- dynamically priority change can be used based upon the CPU time used         
+-- 
+
+
+
+
+
+-- tick 
+	(HZ ==> kernel constant which tells the number of times a second a CPU is interrupted )
+
+
+--------------------------------------------------------------------------------
+Lec-02 Process Management
+
+-- Policy – its about using the mechanism to achieve a certain end
+-- Mechanism – it’s a set of tools, capabilities, ‘library’
+
+What processes exist on the system  at any time (on linux)
+Use ps –ax,   Or
+Examine /proc/  directory
+
+All jobs under one (virtual) terminal (like pts/2) are in one session
+A job is a fancy word for the process (or  processes) on a single command
+
+All processes have a priority that determines how it will be scheduled
+Indicated by a ‘nice’ value in Linux
+A process that is nice to others has reduced scheduling chance…. So higher nice value, lower the scheduling chance
+See   ps –axl
+Some commands to manage priority:
+nice(1)  nice(2)  renice(1)
+Examples using nice and renice from the command line
+We can also change priority using system calls:
+getpriority(2), setpriority(2)
+See priority_ops.c
+
+
+Syscall makes you jump to the kernal state and then after its completion,
+Sysret is called to switch context back to user mode, and all the user info is restored then.
+
+A process has some attributes – stored as part of the PCB structure:
+Process id, parent process information
+List of open files
+Info on memory occupied
+Register values, including PC, flags etc.  - called Context of a process
+Scheduling information – time used and scheduling parameters (priority etc)
+- PCB = “Process Control Block” 
+Context is stored in the PCB when task is not running, eg when switching from one task to another.
+Context helps to restore a process when it has to rerun.
+Process table stores a mapping pid --> PCB
+
+Kernel and user mode context
+
+User stack is used to hold  all the call information/local variables etc of the call (Activation record). 
+However this user stack is not used when executing in kernel mode. Instead a per process kernel stack is used.
+However the kernel still knows the currently running process, so it knows the which process, when executing in kernel mode.
+When a syscall is made the context of the currently executing process is stored in this kernel stack of that process.
+BTW, Kernel stack could optionally hold the PCB.
+
+
+For processes waiting on something the wchan column says where in the kernel the wait is happening
+
+
+Terminated state and zombie processes
+
+It is not unusual that the child process terminates before the parent
+When the child terminates, the parent is expected to issue a wait() system call to get the child information.
+Therefore in Linux the child enters the terminated state. In this state it is no longer schedulable. It simply waits for its parent to read its exit status. Once parent has read the exit status, the child PCB is removed.
+This state is also called zombie state
+
+
+
+
+Orphaned processes
+It is possible for the parent to exit early and the child to continue to run.
+Such processes are called ‘orphaned processes’ – i.e., it is alive, but its parent has terminated.
+How they are dealt with:
+On some OSes this causes all children to terminate too.
+On Linux the process is allowed to run;  however, its parent is changed
+This is called reparenting the process.
+A specific process such as systemd is assigned as the new parent process.
+
+
+Context Switching
+Goals of context switching from say process A to process B
+When process A terminated, then if a process B is ready
+When process A is running, but becomes blocked, then if a process B is ready.
+When process A is running, but it is out of its time quota, then if process B is ready
+The aim is to make the CPU available to other  processes on the system.
+
+
+All the processes that are in the ‘Ready’ state are candidates to be given the CPU.
+These are put into a list or queue of some sort. This is called a Run Queue.
+In some sense Scheduling is about organizing the run queue and selecting processes from the run queue to be assigned to the CPU
+
+Simple Scheduling Metrics and Job assumptions
+
+TAT (Turnaround time) = Completion Time – Arrival Time
+Some assumptions about processes that may or may not hold:
+A1:  All processes have the same execution time, say 10s
+A2: Arrive at the same time
+A3: No preemption: once started, a process is given CPU till it is complete
+A4: No processes are blocked (e.g., they don’t perform IO)
+A5: We know the run time of each process
+Simplest method would be to schedule jobs in the order in which they arrive
+
+Response Time = Time to first access to CPU
+Round Robin (time slicing) is the simplest form of preemptive scheduling to reduce response time
+
+So one needs to balance the time slice size appropriately. 
+Too small means we have too much overhead/ inefficiencies
+Too large means we increase response time
+
+Each process is given a priority. A higher priority process is given more CPU time than a lower priority process.
+Nice values are an example of this. The nice value is translated to a priority.
+
+STCF ==> shortest time to complete first
+
+
+Multi Level Feedback Queue based Scheduling (priority change over time)
+
+A process is allotted a certain time according to its priority.
+Create a queue of processes according to the priorities
+Rule 1 if Priority(P) > Priority(Q) then Run P
+Rule 2 if Priority(P) = Priority(Q) then Run them in Round Robin
+Rule 3 new processes are at the highest priority
+Rule 4 Reduce the priority of a process based on how much time it uses up.
+Rule 5 Periodically boost the priority of all processes
+
+
+SCHED_DEADLINE  is used to schedule jobs with
+A periodic execution
+A deadline to react (sometimes same as period)
+A required guaranteed run time before that deadline
+
+Notion of a “tick”
+It is a unit of time used in the kernel for its notion of time.
+Also called a Jiffy in Linux
+It is the time to interrupt the CPU 
+Hardware interrupt is provided by an external timer (like a PIC)
+Linux Jiffy configuration and use:
+There is a kernel constant called HZ  			   HZ  =  1000   means
+Number of times  a second that the CPU is interrupted	   CPU interrupted each ms
+This is used to control how often the timer is interrupted
+Important from a scheduling point of view
+At each timer interrupt the amount of time used by a process is accounted.
+If required the scheduler is also called. 
+
+----------------------------------------------------------------------------------
+12/02/25
+
+where is the timer interrupt coming from?
+hardware??
+
+what's a driver?
+a lil piece of code depends ypon the hardware while most code is written hardware independent.
+this code is different for diff devices-- so, the part of kernal that is used for dealing with hardware is the driver.
+
+Critical Section is fancy term for the same code being used by two differet processes at the same time(eg updating a var x at the same time.)
+locks  
+
+ Critical Section in OS
+The critical section is a part of a program where shared resources (like variables, files, or memory) are accessed and modified. To prevent race conditions (unpredictable behavior due to multiple processes accessing shared data simultaneously), only one process should enter the critical section at a time.
+
+priority inversion
+-------------------------------------------------------------------------------
+
+physically (meta data) is stored on the disk and virtually on the inode 
+except for the file name...all the rest meta data is stored on inode
+sector is a physical size
+
+partitions are made up of blocks and blocks are made up of sectors
+
+partitioning isn't a physical activity...
+every file system is 1 partition
+
+----------------------------------------------------------------------------------
+sdb1 ==> main device which can have minor device
+MBR ==> contains a table which tells the start and end sectors for all the partitons
+MBR can also have boot sector.(a small code that boots the system)
+OS is inside a partition. 
+disk --> partition --> filesystem
+mbr is supposed to be generic
+(so it assumes the first sector of the partition has some code which is a lil boot loader code which is specific to the os and the fs.)
+
+mkfs organizes all the blocks in the partition to make a fs.
+
+how to copy b/w different fs
+
+One directory = one filesystem at any given time.
+You can mount different filesystems on different directories.
+Filesystems can be ext4, NTFS, FAT32, etc., and you can access them from your system by mounting them to specific directories.
+
+HBA takes care of the major no. 
+kernal navigates via HBA.... 
+
+In the context of Linux and Unix-like operating systems, major and minor numbers are used to identify devices. They are part of the device management system, and they help the kernel manage device files (typically located in /dev/).
+
+Major number: It identifies the driver or the type of device. This number is used by the operating system to associate the device with the correct driver.
+Minor number: It identifies the specific instance of the device or the particular unit. This number helps the kernel distinguish between multiple devices of the same type.
+Together, these two numbers form a unique identifier for each device file.
+
+0 indicates that the inode is free to use in the inode bitmap
+1 indicates busy
+
+softlink doesnt reflect in the inode no.
+hardlinks are stored in the inode no.
+
+
+so when rm is done the link count is reduced by 1 and then the information is removed from the respective inode and the data
+
+1 bit for every block in the blocks bitmap representing if its available for use or not
+
+--------------------------------------------------------------------------------
+19/02/25
+
+mbr contatins boot loader which starts vbr which has another boot loader.
+(chained bootloading)
+
+-- BIOS is a bunch of code written in nv RAM(non-volitiale) ... it has the address that the startup points to.(earlier called POST)
+-- This goes through every memory and checks if everything is ok.
+
+Extended BIOS ==> UEFI (mode)
+==>  
+volume(also called partition)
+
+file system code in kernal
+
+vfs is code in the kernal
+
+open is a syscall (whereas fopen is a c lib call).
+fopen is user mode code.
+fopen calls open and it calls the fd(file descriptor).
+fd int gives the index of the file descriptor tell.
+two diff processes have two diff fd tables.
+
+what happens when we open a file?
+we get fd index.
+
+same file having the same inode can have two diff open file table pointers.
+(they can have two diff procs) but they will point to the same inode.
+inode have specific file operations(that makes file specific).
+
+
+-----------------------------------------------------------------------------------------
+28/02//25
+if all the write fds have been closed in the pipe then the os can detect it and it considers it as the end of the file and the read can understand it and stop there.
+
+
+
+
+
+Efficiency Considerations
+/a/b
+(check permission on each level)
+'/' we look it up..we get its inode which tells its device info -- device lookup(slow op)
+now we go that device then go to 'a' check its inode
+
+seek time , rotationaly latency ==> waiting for the right track to come under the head.
+
+
+locality on the disk
+	striping
+	redundancy
+	parity
+
+
+-----------------------------------------------------
+open() makes a new open table entry every time it is called and gives a new fd.
+
+
+
+----------------------------------------------------------------------------------------------------------
+21/03/25
+
+Mem Management
+
+process address space -- virtual
+eg ==> 777 to the 
+
+per process we mainatin a base and a bound
+
+MMU ==> generate PA
+
+
+segmenting the process address space
+==> all dont need to contigous in total ..ie when one ends other doesn't need to start and also the order can be anything.
+
+
+MMU has base-bound pairs .... so select the appropriate pair using the first two bits of VA
+(Asking for smaller spaces is easier than asking for bigger chunks that are fully contigous.)
+
+perms --> permissions (MMU)
+
+pa = PABase + VA.offset
+
+
+Page frame is physcial part of the memory
+starts at 0 to 4k-1
+then 4k to 8k-1
+
+a process will be given a set of page frames and they need not be contigous
+
+
+the last unusable part at the end of the segment that cant be used is called internal fragment.
+
+page is virtual memory, frames in pa
+
+just like the pa is chopped up into 4k frames ... the va must ve chopped in 4k pages
+
+mapping frames to the pages
+
+we dont want contiguous address space... we wanna break it.. so we go to paging
+
+every page points to a different frame.
+
+the numbers in the PTE ie the physical page numbers need not be contigous.(even if they are contigous in va)
+
+PTEs are in the RAM and not in the MMU as they are too big.
+
+every process has a page table for translation.
+
+thrashing -- in and out, in and out 
+swaping 
+
+-----------------------------------------------------------------------------
+02/04/25
+
+The pmap command is a Linux/Unix utility used to display the memory map of a running process. It gives a breakdown of how a process is using its virtual memory, including details about different segments (like stack, heap, code), their permissions, and sizes.
+
+🧠 1. malloc() and memory allocation
+When a user program (like your C code) calls malloc(), it asks for memory.
+
+Behind the scenes, the program doesn't get memory in tiny chunks right from the OS.
+
+Instead, it asks the OS for larger chunks (typically in pages — like 4 KB blocks), and then manages smaller allocations on its own from that pool.
+
+🔄 2. Managing free memory: Split & Coalesce
+Once a large chunk is available, the allocator must track what parts are used and what parts are free.
+
+Split: If a request for 16 bytes comes in, the allocator might split a 64-byte chunk into 16 and 48.
+
+Coalesce: When two adjacent free blocks are found, they might be merged (coalesced) into one larger block to reduce fragmentation.
+
+This is often tracked using a linked list of free pieces, or more sophisticated data structures like trees.
+
+👯 3. The Buddy System (used by the OS)
+It’s an efficient memory allocation strategy.
+
+Memory is divided into blocks of sizes that are powers of two (e.g., 4 KB, 8 KB, 16 KB…).
+
+When a request comes in:
+
+If an exact-sized block isn’t available, a bigger block is split into two “buddies”.
+
+If both buddies become free, they are coalesced back.
+
+✅ It helps reduce external fragmentation while keeping allocations efficient.
+
+🧰 4. Slab Allocation (used in the kernel)
+Kernel frequently needs small chunks of memory (e.g., structs like file descriptors, inodes, task structs).
+
+Instead of allocating and freeing them from scratch each time, it keeps caches of pre-allocated, ready-to-use objects.
+
+These caches are called slabs.
+
+They may even be pre-initialized, so allocation is super fast.
+
+You can check the status of these slab caches in Linux using:
+
+----------------------------------------------------------------------------
+9/04/25
+
