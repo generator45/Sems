@@ -1,19 +1,25 @@
-# MPI Installation Guidelines
+# MPI Installation Guidelines (OpenMPI)
 
-## 1. Install MPICH and development libraries
+## 1. Install OpenMPI and development libraries
 
 ```sh
-sudo apt install mpich
-sudo apt install libmpich-dev
+sudo apt install openmpi-bin libopenmpi-dev
 ```
 
-## 2. Find the `mpicc` path
+## 2. Find the `mpicc` and `mpi.h` paths
 
 ```sh
+which mpicc
+which mpirun
 find /usr -name mpi.h 2>/dev/null
 ```
 
-## 3. Configure VS Code for MPI development
+Typical output:
+- mpicc: `/usr/bin/mpicc`
+- mpirun: `/usr/bin/mpirun`
+- mpi.h: `/usr/lib/x86_64-linux-gnu/openmpi/include/mpi.h`
+
+## 3. Configure VS Code for MPI development (OpenMPI)
 
 - Create a new folder for your MPI codes.
 - Add a `.vscode` folder inside it.
@@ -26,7 +32,7 @@ find /usr -name mpi.h 2>/dev/null
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/lib/x86_64-linux-gnu/mpich/include/**"
+                "/usr/lib/x86_64-linux-gnu/openmpi/include/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/mpicc",
